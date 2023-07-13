@@ -6,5 +6,6 @@ class Constants {
         const val API_KEY: String = "ddd3377103864182a3f124927230907"
         const val END_POINT: String = "v1/forecast.json"
         const val CURRENT_LOCATION = "auto:ip"
+        const val ERROR_INTERNET = "no network connection"
     }
 }

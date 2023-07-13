@@ -2,6 +2,11 @@ package com.example.weatherforecast
 
 import android.app.Activity
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.ConnectivityManager.NetworkCallback
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -23,6 +28,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
     private lateinit var nameLocation: TextView
@@ -39,14 +45,38 @@ class MainActivity : AppCompatActivity() {
     private lateinit var txtHumidity: TextView
     private lateinit var txtWindSpeed: TextView
 
-    private lateinit var context:Context
+    private lateinit var context: Context
+    private var isConnect = false
+    private lateinit var connectActivity: ConnectivityManager
+    private lateinit var networkCallback: NetworkCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        checkInternet()
         init()
+    }
 
+    private fun checkInternet() {
+        connectActivity = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        networkCallback = object: NetworkCallback(){
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                isConnect = true
+                getData(Constants.CURRENT_LOCATION)
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                isConnect = false
+                Toast.makeText(context, Constants.ERROR_INTERNET,Toast.LENGTH_SHORT).show()
+            }
+        }
+        val networkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+
+        connectActivity.registerNetworkCallback(networkRequest, networkCallback)
     }
 
     private fun init(){
@@ -65,7 +95,6 @@ class MainActivity : AppCompatActivity() {
         txtWindSpeed = findViewById(R.id.txt_windspeed)
 
         context = this
-        getData(Constants.CURRENT_LOCATION)
         setupView()
     }
 
@@ -146,5 +175,9 @@ class MainActivity : AppCompatActivity() {
                 t.message?.let { Log.e("onFailure", it) }
             }
         })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
